@@ -1,5 +1,39 @@
 ---
 title: "Bandi"
+author: Fondazione Cariparma - Osservatorio dei dati sociali
+date: last-modified
+date-format: "DD-MMMM-YYYY"
+lang: it
+
+format:
+  html:
+    theme: flatly
+    code-fold: true
+    toc-depth: 3
+    toc_float: true
+    toc-location: left
+    toc-title: Indice
+    embed-resources: true
+  docx:
+    toc: false
+    toc-depth: 3
+    toc-title: "Indice"
+    highlight-style: tango
+    embed-resources: true
+    page-width: 9
+    fig-width: 8
+    fig-height: 6
+    dpi: 300
+
+execute:
+  eval: true
+  echo: false
+  warning: false
+  error: false
+  output: false
+
+bibliography: assets/OIS.bib
+suppress-bibliography: false
 ---
 
 ## Bandi
