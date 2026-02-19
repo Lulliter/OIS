@@ -1,44 +1,100 @@
 [
   {
-    "objectID": "progetti_propri.html",
-    "href": "progetti_propri.html",
+    "objectID": "OIS/progetti_propri.html#check-coerenza-if---im-by-key-8-outcomes-respective-indicators",
+    "href": "OIS/progetti_propri.html#check-coerenza-if---im-by-key-8-outcomes-respective-indicators",
     "title": "PP",
-    "section": "",
-    "text": "Content for the PP page goes here."
+    "section": "Check coerenza IF - IM by key 8 outcomes & respective indicators",
+    "text": "Check coerenza IF - IM by key 8 outcomes & respective indicators\n\n[REPORT?] Impact readiness\n\n\nAttribuzione del ruolo della fondazione\n1 indicatore dumb\n\n\nAumento delle opportunità lavorative\n2 indicatori\n\n\nIncrementata cultura dell’apprendimento continuo e riconoscimento competenze\n\n\n[Report?] Incremento dell’attrattività\n23 indicatori\n\n\nIncremento della collaborazione tra attori del territorio\n13 indicatori\n\n\nIncremento e miglioramento dell’offerta culturale\n30 indicatori\n\n\nMaggiore accessibilità dell’offerta culturale\n13 indicatori\n\n\nValorizzazione del patrimonio culturale e territoriale\n29 indicatori"
   },
   {
-    "objectID": "progetti_propri.html#pp-analysis",
-    "href": "progetti_propri.html#pp-analysis",
+    "objectID": "OIS/progetti_propri.html#check-se-capisco-come-hanno-tirato-fuori-risultati-in-report-dic-2025",
+    "href": "OIS/progetti_propri.html#check-se-capisco-come-hanno-tirato-fuori-risultati-in-report-dic-2025",
     "title": "PP",
-    "section": "",
-    "text": "Content for the PP page goes here."
+    "section": "Check se capisco come hanno tirato fuori risultati in Report Dic 2025",
+    "text": "Check se capisco come hanno tirato fuori risultati in Report Dic 2025\nCfr (Sinloc 11dic 2025)"
   },
   {
-    "objectID": "bandi.html",
-    "href": "bandi.html",
-    "title": "Bandi",
-    "section": "",
-    "text": "Content for the Bandi page goes here."
-  },
-  {
-    "objectID": "bandi.html#bandi",
-    "href": "bandi.html#bandi",
-    "title": "Bandi",
-    "section": "",
-    "text": "Content for the Bandi page goes here."
+    "objectID": "OIS/progetti_propri.html#qa-confronto-report-dic-205-v.-impact-insight",
+    "href": "OIS/progetti_propri.html#qa-confronto-report-dic-205-v.-impact-insight",
+    "title": "PP",
+    "section": "Q&A confronto Report dic 205 v. Impact Insight",
+    "text": "Q&A confronto Report dic 205 v. Impact Insight\n\nNel IF in excel per i progetti propri posso associare queste categorie, ma non sempre si apre la tendina corrispondente in Impact Insight:\n\nProgetto - OK\nPrime outcome tag name (macro aree) 4 - NON si APRE\nPrime indicator tag name (indicator tag) 5 - NON si APRE\nOutcome name value (outcome) 8 - OK\nIndicator name value (indicator) 121 - OK\nStakeholder name value (stakeholder) - OK\n\n(non potremmo chiamare “macro aree” invece che “tag outcome” per coerenza col nostro sistema?)\nLa tabella riportata a p 38/39 del report di dicembre non corrisponde a quello che si vede in IM (Outcome specifico e indicatori associati), che invece corrisponddono tra IF e IM\nIn Impact insight, cosa rappresentano la tabella KPI e la tabella Indicatore | Frequenza (forse non hanno molto senso se si stnno guardano i progetti propri?)"
   },
   {
     "objectID": "index.html",
     "href": "index.html",
     "title": "OIS - Home",
     "section": "",
-    "text": "This is the home page of the OIS project.\n\n\nAdd your project description here.\n\n\n\nThis project uses data from:\n\ndata_in/ - Input data directory\ndata_out/ - Output data directory"
+    "text": "About\nStrumento interno per esplorare query di dati sui progetti di Fondazione Cariparma. Il progetto è in fase di sviluppo e non è ancora disponibile al pubblico."
   },
   {
-    "objectID": "index.html#welcome-to-ois",
-    "href": "index.html#welcome-to-ois",
-    "title": "OIS - Home",
+    "objectID": "SIME/bandi.html",
+    "href": "SIME/bandi.html",
+    "title": "Bandi - da SIME",
     "section": "",
-    "text": "This is the home page of the OIS project.\n\n\nAdd your project description here.\n\n\n\nThis project uses data from:\n\ndata_in/ - Input data directory\ndata_out/ - Output data directory"
+    "text": "Content for the Bandi page goes here."
+  },
+  {
+    "objectID": "SIME/bandi.html#bandi",
+    "href": "SIME/bandi.html#bandi",
+    "title": "Bandi - da SIME",
+    "section": "",
+    "text": "Content for the Bandi page goes here."
+  },
+  {
+    "objectID": "SIME/bandi.html#check-variabili-della-tabella-all_2024",
+    "href": "SIME/bandi.html#check-variabili-della-tabella-all_2024",
+    "title": "Bandi - da SIME",
+    "section": "Check variabili della tabella all_2024",
+    "text": "Check variabili della tabella all_2024"
+  },
+  {
+    "objectID": "SIME/bandi.html#variabili-utili-da-esaminare",
+    "href": "SIME/bandi.html#variabili-utili-da-esaminare",
+    "title": "Bandi - da SIME",
+    "section": "Variabili UTILI da esaminare",
+    "text": "Variabili UTILI da esaminare\n\nIndirizzo, localita, [Quartiere], Pv, Cap, NAzione\nEmail richiedente, Sito Web richiedente,\nCategoria Descrizione Categoria !"
+  },
+  {
+    "objectID": "SIME/bandi.html#domande-per-area-erogativa",
+    "href": "SIME/bandi.html#domande-per-area-erogativa",
+    "title": "Bandi - da SIME",
+    "section": "Domande per Area Erogativa",
+    "text": "Domande per Area Erogativa\n\nHo esportato da SIME facendo:\n\n\nErogazioni -&gt; Esportazioni su Excel -&gt; Analisi Richieste ed Enti -&gt; Esportazione Totale da Testata\nunico filtro usato 2024\n\nQui ho alcune domande:\n\nVariabili sempre vuote:\n\nxchè Indirizzo fiscale, Aggregazione territoriale, Ambito e Descrizione Ambito, Codice Sottoprogetto, Categoria Progetto, Tipo Progetto sono sempre vuote?\n\n( Ambito ~ nel senso del PS o altro?)\n\nxchè tutte vuote?\n\nArea a cosa è riferito: ENTE; PROGETTO, BANCA?\nZona a cosa è riferito: ENTE; PROGETTO, BANCA?"
+  },
+  {
+    "objectID": "OIS/bandi.html",
+    "href": "OIS/bandi.html",
+    "title": "Bandi",
+    "section": "",
+    "text": "Content for the Bandi page goes here."
+  },
+  {
+    "objectID": "OIS/bandi.html#bandi",
+    "href": "OIS/bandi.html#bandi",
+    "title": "Bandi",
+    "section": "",
+    "text": "Content for the Bandi page goes here."
+  },
+  {
+    "objectID": "OIS/bandi.html#check-coerenza-if---im-by-key-8-outcomes-respective-indicators",
+    "href": "OIS/bandi.html#check-coerenza-if---im-by-key-8-outcomes-respective-indicators",
+    "title": "Bandi",
+    "section": "🟨🟩🟧🟦 Check coerenza IF - IM by key 8 outcomes & respective indicators",
+    "text": "🟨🟩🟧🟦 Check coerenza IF - IM by key 8 outcomes & respective indicators\n\n[REPORT?] Impact readiness\n\n\nAttribuzione del ruolo della fondazione\n1 indicatore dumb\n\n\nAumento delle opportunità lavorative\n2 indicatori\n\n\nIncrementata cultura dell’apprendimento continuo e riconoscimento competenze\n\n\n[Report?] Incremento dell’attrattività\n23 indicatori\n\n\nIncremento della collaborazione tra attori del territorio\n13 indicatori\n\n\nIncremento e miglioramento dell’offerta culturale\n30 indicatori\n\n\nMaggiore accessibilità dell’offerta culturale\n13 indicatori\n\n\nValorizzazione del patrimonio culturale e territoriale\n29 indicatori"
+  },
+  {
+    "objectID": "OIS/bandi.html#check-se-capisco-come-hanno-tirato-fuori-risultati-in-report-dic-2025",
+    "href": "OIS/bandi.html#check-se-capisco-come-hanno-tirato-fuori-risultati-in-report-dic-2025",
+    "title": "Bandi",
+    "section": "Check se capisco come hanno tirato fuori risultati in Report Dic 2025",
+    "text": "Check se capisco come hanno tirato fuori risultati in Report Dic 2025\nCfr (Sinloc 11dic 2025)"
+  },
+  {
+    "objectID": "OIS/bandi.html#qa-confronto-report-dic-205-v.-impact-insight",
+    "href": "OIS/bandi.html#qa-confronto-report-dic-205-v.-impact-insight",
+    "title": "Bandi",
+    "section": "Q&A confronto Report dic 205 v. Impact Insight",
+    "text": "Q&A confronto Report dic 205 v. Impact Insight\n\nNel IF in excel per i progetti propri posso associare queste categorie, ma non sempre si apre la tendina corrispondente in Impact Insight:\n\nProgetto - OK\nPrime outcome tag name (macro aree) 4 - NON si APRE\nPrime indicator tag name (indicator tag) 5 - NON si APRE\nOutcome name value (outcome) 8 - OK\nIndicator name value (indicator) 121 - OK\nStakeholder name value (stakeholder) - OK\n\n(non potremmo chiamare “macro aree” invece che “tag outcome” per coerenza col nostro sistema?)\nLa tabella riportata a p 38/39 del report di dicembre non corrisponde a quello che si vede in IM (Outcome specifico e indicatori associati), che invece corrisponddono tra IF e IM\nIn Impact insight, cosa rappresentano la tabella KPI e la tabella Indicatore | Frequenza (forse non hanno molto senso se si stnno guardano i progetti propri?)"
   }
 ]

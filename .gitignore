@@ -46,12 +46,6 @@ data/data_out/**/*
 !data/data_out/**/*.md
 !data/data_out/**/*.pdf
 
-
-# ----- OUTPUT objects for DASHBOARD (keep)
-!data/maps/**/*
-!data/plots/**/*
-
-
 # ----------------- Personal
 # OAuth2 token, see https://github.com/hadley/httr/releases/tag/v0.3
 .httr-oauth
@@ -59,6 +53,6 @@ data/data_out/**/*
 _notes/**/*.*
 
 # ----------------- Unnecessary
-zzz/**/*.*
-*/zzz/**/*.*
 CLAUDE.md
+
+**/*.quarto_ipynb

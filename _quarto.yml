@@ -3,15 +3,21 @@ project:
   output-dir: docs
 
 website:
-  title: "OIS"
+  title: "Analisi dati interni"
   navbar:
     left:
       - href: index.qmd
         text: Home
-      - href: progetti_propri.qmd
-        text: Progetti Propri
-      - href: bandi.qmd
-        text: Bandi
+      - text: OIS
+        menu:
+          - href: OIS/progetti_propri.qmd
+            text: Progetti Propri
+          - href: OIS/bandi.qmd
+            text: Bandi
+      - text: SIME
+        menu:
+          - href: SIME/bandi.qmd
+            text: Query sui bandi 2024/25
 
 format:
   html:

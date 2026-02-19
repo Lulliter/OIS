@@ -1,0 +1,253 @@
+---
+title: "Bandi - da SIME"
+author: Fondazione Cariparma - Osservatorio dei dati sociali
+date: last-modified
+date-format: "DD-MMMM-YYYY"
+lang: it
+
+format:
+  html:
+    theme: flatly
+    code-fold: true
+    toc-depth: 3
+    toc_float: true
+    toc-location: left
+    toc-title: Indice
+    embed-resources: true
+  docx:
+    toc: false
+    toc-depth: 3
+    toc-title: "Indice"
+    highlight-style: tango
+    embed-resources: true
+    page-width: 9
+    fig-width: 8
+    fig-height: 6
+    dpi: 300
+
+execute:
+  eval: true
+  echo: false
+  warning: false
+  error: false
+  output: false
+
+bibliography: ../assets/OIS.bib
+suppress-bibliography: false
+---
+
+## Bandi
+
+Content for the Bandi page goes here.
+
+```{r}
+#| echo: false
+#| warning: false
+
+# Your R code here to analyze data from OIS/data_in/
+```
+
+
+
+```{r}
+# Packgs and functions ----
+library(here)
+library(fs)
+library(readxl)
+library(janitor)
+library(skimr)
+library(glue)
+
+library(dplyr)
+library(tidyr)
+library(forcats)
+library(stringr)
+library(purrr)
+library(flextable)
+library(sf)
+library(ggplot2)
+library(ggiraph)
+library(camcorder)
+library(patchwork) # for combining ggplots
+# p1 + p2                    # Affiancati
+# p1 / p2                    # Uno sopra l'altro
+# p1 | p2                    # Affiancati (equivalente a +)
+# (p1 + p2) / p3             # Layout complesso
+# p1 + p2 + plot_layout(ncol = 2)  # Specificare colonne
+
+# Colors ----
+grey_extra_sc <- "#4F4F4F"
+grey_sc <- "#808080"
+grey_md1 <- "#A9A9A9"
+grey_md2 <- "#D3D3D3"
+grey_extrlight <- "#FDFBF7"
+burg_sc <- "#5C2129"
+burg_md <- "#873C4A"
+burg_lg <- "#B85E6A"
+blu_sc <- "#033c55"
+blu_md <- "#005d82"
+blu_lg <- "#5582a7"
+grn_sc <- "#246864"
+grn_md <- "#539d90"
+grn_lg <- "#8eb9b1"
+ylw_sc <- "#b27d2c"
+ylw_md <- "#d9a44a"
+ylw_lg <- "#f0c166"
+
+maschi <- "#6B8FAD"
+femmine <- "#C47A87"
+
+grave <- "#834ba0"
+moderata <- "#ce78b3"
+
+```
+
+
+```{r}
+# ------- R utilities and functions
+source(file = here("R", "f_recap_values.R")) # # f_recap_values(df, c("col1","col2"))
+#source(file = here("R","f_ggplot2.R")) # custom ggplot2 theme
+source(file = here("R", "f_ft_formatting.R")) # %>% f_ft_properties()
+```
+
+# Importazione dati per Eval LAB calls  
+ 
+Ho esportato da SIME facendo:
+ + `Erogazioni -> Esportazioni su Excel -> Analisi Richieste ed Enti -> Esportazione Totale da Testata` 
+ + unico filtro usato `2024` 
+
+```{bash}
+#| eval: false
+
+SRC='/Users/luisamimmi/Library/CloudStorage/OneDrive-FondazioneCassadiRisparmiodiParmaeMontediCreditosuPegnodiBusseto/Transfer PC2Mac/download_sime'
+
+# da fare uno a uno xchè i file nella cartella sono "on demand" e non local quindi * non li vede!!!
+cp "$SRC/SIME.png" './data_in/' # show query
+cp "$SRC/all_2024.xls" './data_in/'
+cp "$SRC/all_2025.xls" './data_in/'
+```
+
+```{r}
+#| label: import_data
+
+all_2024 <- read_xls(here("SIME", "data_in", "all_2024.xls")) |>
+  relocate('Descrizione Aggettivo', .after = 'Aggettivo')
+all_2025 <- read_xls(here("SIME", "data_in", "all_2025.xls")) |>
+  relocate('Descrizione Aggettivo', .after = 'Aggettivo')
+```
+
+## Check variabili della tabella `all_2024`
+```{r}
+# do they have the same variables as all_2025 ? YES
+check_var <- all_2024 %>%
+  names() %>%
+  sort() ==
+  all_2025 %>%
+    names() %>%
+    sort() |>
+    tibble()
+
+# check variables completely empty in BOTH datasets
+check_empty <- tibble(
+  var_name = names(all_2024),
+  is_empty_2024 = map_lgl(all_2024, ~ all(is.na(.x))),
+  is_empty_2025 = map_lgl(all_2025, ~ all(is.na(.x))),
+  empty_both = is_empty_2024 & is_empty_2025
+)
+```
+
+```{r}
+# ----- (prep)
+# get first non-NA value for each column
+examples <- all_2024 |>
+  map_chr(
+    ~ {
+      non_na <- na.omit(.x)
+      if (length(non_na) > 0) as.character(non_na[1]) else NA_character_
+    }
+  )
+
+# check if column is completely empty (all NA) in BOTH datasets
+is_empty <- names(all_2024) |>
+  map_chr(
+    ~ if_else(
+      all(is.na(all_2024[[.x]])) & all(is.na(all_2025[[.x]])),
+      "yes",
+      "no"
+    )
+  ) |>
+  set_names(names(all_2024))
+
+
+# ----- make a table with the columnns 1) var name, 2) var meaning, 3) unique ID (yes no) 4) dominon available (yes no) .... to be completed later
+var_desc_tbl <- all_2024 %>%
+  names() %>%
+  tibble(var_name = .) |>
+  mutate(
+    example = examples[var_name],
+    unique_id = NA_character_,
+    all_empty = is_empty[var_name],
+    var_desc = NA_character_,
+    lookup_table = NA_character_
+  )
+
+# lookup tables (named vectors)
+lookup_unique_id <- c(
+  # "var_name" = "yes" or "no"
+)
+
+lookup_desc <- c(
+  # "var_name" = "my description"
+  "Aggettivo" = "?"
+  # add more here...
+)
+
+lookup_needs_table <- c(
+  # "var_name" = "yes" or "no" or "needed", etc
+  "Aggregazione territoriale" = "needed",
+  "Ambito" = "needed",
+  "Descrizione Ambito" = "needed",
+  "Aggettivo" = "needed",
+  "Categoria Progetto" = "needed",
+  "Codice Sottoprogetto" = "needed",
+  "Tipo Progetto" = "needed",
+  "Area" = "needed",
+  "Descrizione Area" = "needed"
+)
+
+# apply lookups + pattern matching with case_when
+var_desc_tbl <- var_desc_tbl |>
+  mutate(
+    var_desc = case_when(
+      str_detect(var_name, "Azione Mkt|Referee") ~ "?",
+      !is.na(lookup_desc[var_name]) ~ lookup_desc[var_name],
+      TRUE ~ var_desc
+    ),
+    unique_id = coalesce(lookup_unique_id[var_name], unique_id),
+    lookup_table = coalesce(lookup_needs_table[var_name], lookup_table)
+  )
+
+```
+
+## Variabili UTILI da esaminare 
+
++ Indirizzo, localita, [Quartiere],  Pv, Cap, NAzione
++ Email richiedente, Sito Web richiedente, 
+
++ Categoria Descrizione Categoria ! 
+
+## Domande per Area Erogativa
+
+1. Ho esportato da SIME facendo:
+ + `Erogazioni -> Esportazioni su Excel -> Analisi Richieste ed Enti -> Esportazione Totale da Testata` 
+ + unico filtro usato `2024` 
+
+ Qui ho alcune domande:
+
++ Variabili sempre vuote:
+  + xchè `Indirizzo fiscale`, `Aggregazione territoriale`, `Ambito` e `Descrizione Ambito`, `Codice Sottoprogetto`, `Categoria Progetto`, `Tipo Progetto` sono sempre vuote? 
+    + ( `Ambito` ~ nel senso del PS o altro?)
+  + xchè tutte vuote?  
+
++ `Area` a cosa è riferito: ENTE; PROGETTO, BANCA? 
++ `Zona` a cosa è riferito: ENTE; PROGETTO, BANCA? 

@@ -1,0 +1,288 @@
+---
+title: "Bandi"
+author: Fondazione Cariparma - Osservatorio dei dati sociali
+date: last-modified
+date-format: "DD-MMMM-YYYY"
+lang: it
+
+format:
+  html:
+    theme: flatly
+    code-fold: true
+    toc-depth: 3
+    toc_float: true
+    toc-location: left
+    toc-title: Indice
+    embed-resources: true
+  docx:
+    toc: false
+    toc-depth: 3
+    toc-title: "Indice"
+    highlight-style: tango
+    embed-resources: true
+    page-width: 9
+    fig-width: 8
+    fig-height: 6
+    dpi: 300
+
+execute:
+  eval: true
+  echo: false
+  warning: false
+  error: false
+  output: false
+
+bibliography: ../assets/OIS.bib
+suppress-bibliography: false
+---
+
+## Bandi
+
+Content for the Bandi page goes here.
+
+```{r}
+#| echo: false
+#| warning: false
+
+# Your R code here to analyze data from OIS/data_in/
+```
+
+
+
+```{r}
+# Packgs and functions ----
+library(here)
+library(fs)
+library(readxl)
+library(janitor)
+library(skimr)
+library(glue)
+
+library(dplyr)
+library(tidyr)
+library(forcats)
+library(stringr)
+library(purrr)
+library(flextable)
+library(sf)
+library(ggplot2)
+library(ggiraph)
+library(camcorder)
+library(patchwork) # for combining ggplots
+# p1 + p2                    # Affiancati
+# p1 / p2                    # Uno sopra l'altro
+# p1 | p2                    # Affiancati (equivalente a +)
+# (p1 + p2) / p3             # Layout complesso
+# p1 + p2 + plot_layout(ncol = 2)  # Specificare colonne
+
+# Colors ----
+grey_extra_sc <- "#4F4F4F"
+grey_sc <- "#808080"
+grey_md1 <- "#A9A9A9"
+grey_md2 <- "#D3D3D3"
+grey_extrlight <- "#FDFBF7"
+burg_sc <- "#5C2129"
+burg_md <- "#873C4A"
+burg_lg <- "#B85E6A"
+blu_sc <- "#033c55"
+blu_md <- "#005d82"
+blu_lg <- "#5582a7"
+grn_sc <- "#246864"
+grn_md <- "#539d90"
+grn_lg <- "#8eb9b1"
+ylw_sc <- "#b27d2c"
+ylw_md <- "#d9a44a"
+ylw_lg <- "#f0c166"
+
+maschi <- "#6B8FAD"
+femmine <- "#C47A87"
+
+grave <- "#834ba0"
+moderata <- "#ce78b3"
+
+```
+
+
+```{r}
+# ------- R utilities and functions
+source(file = here("R","f_recap_values.R")) # # f_recap_values(df, c("col1","col2"))
+#source(file = here("R","f_ggplot2.R")) # custom ggplot2 theme
+source(file = here("R", "f_ft_formatting.R")) # %>% f_ft_properties()
+```
+
+# Importazione IF rilevante 
+ 
+```{r}
+#| label: import_data
+
+IF_feb2026 <- read_excel(here("OIS", "data_in", "IF_feb2026.xlsx")) |> 
+  janitor::clean_names() |>
+  filter(!str_detect(progetto, "Palazz")) |> 
+  select(-ultime_group_name, -anno_di_avvio_progetto) |> 
+  rename(progetto = progetto,
+         outcome = outcome_name_value,
+         macro_aree = prime_outcome_tag_name,
+         indicator = indicator_name_value,
+         indicator_tag = prime_indicator_tag_name,
+         stakeholder = stakeholder_name_value)
+
+
+if_welconn_2024 <- IF_feb2026 |> 
+  filter(str_detect(progetto, "Bando 2024_Welfare connesso"))  
+  
+```
+
+# 2024 Welfare Connesso
+
++ 1) progetto                 1         
++ 2) outcome_name_value       8         = OUTCOME
++ 3) macro_aree               4         = MACRO AREE
++ 4) indicator_name_value     121       = INDICATORI
++ 5) indicator_tag            5         = ???
++ 6) stakeholder_name_value   8       = STAKEHOLDER
+
+
+```{r}
+f_recap_values(if_welconn_2024, c("progetto", "outcome", 
+                                  "macro_aree" ,  "indicator" ,
+                                  "indicator_tag", "stakeholder"  ))
+       
+
+# ----- Tag outcome = MACRO AREE , 4
+tabyl(if_welconn_2024$macro_aree)
+ #                          Area trasversale 16 0.13223140
+ #            Società e sfide per il welfare 13 0.10743802
+ # Sviluppo del capitale umano e innovazione 10 0.08264463
+ #    Trasformazioni urbane e del territorio 82 0.67768595
+
+# ---- indicator_tag = ??, 5                       
+tabyl(if_welconn_2024$indicator_tag)
+   # Capacity building 11 0.090909091
+   #    Collaborazioni 13 0.107438017
+   #      Informazioni 95 0.785123967
+   #    Intenzionalità  1 0.008264463
+   #     Risorse umane  1 0.008264463
+
+# ----- outcome_name_value = OUTCOME, 8
+tabyl(if_welconn_2024$outcome) 
+    # Attribuzione del ruolo della fondazione             1 0.008264463
+    # Aumento delle opportunità lavorative               2 0.016528926
+    # Incrementata cultura dell’apprendimento continuo e riconoscimento competenze 10 0.082644628
+    # Incremento dell'attrattività                       23 0.190082645
+    # Incremento della collaborazione tra attori del territorio 13 0.107438017
+    # Incremento e miglioramento dell'offerta culturale 30 0.247933884
+    # Maggiore accessibilità dell'offerta culturale 13 0.107438017
+    # Valorizzazione del patrimonio culturale e territoriale 29 0.239669421
+                       
+# ----- indicator_name_value = INDICATORI, 121
+tabyl(if_welconn_2024$indicator)  |> 
+  arrange(desc(n)) |> 
+  head(20) # top 20 indicatori
+
+n_distinct(if_welconn_2024$indicator) # 121 indicatori unici
+
+# ----- stakeholder_name_value = 8
+tabyl(if_welconn_2024$stakeholder)
+```
+
+## 🟨🟩🟧🟦 Check coerenza IF - IM by key 8 outcomes & respective indicators
+
+### [REPORT?] Impact readiness
+```{r}
+if_welconn_2024 |> 
+  filter(outcome == "Attribuzione del ruolo della fondazione") |> 
+  select(progetto, outcome, macro_aree, indicator, indicator_tag, stakeholder) |> 
+  f_recap_values(c("progetto", "outcome", "macro_aree", "indicator", "indicator_tag", "stakeholder"))
+```
+
+### Attribuzione del ruolo della fondazione  
+
+1 indicatore dumb 
+```{r}
+if_welconn_2024 |> 
+  filter(outcome == "Attribuzione del ruolo della fondazione") |> 
+  select(macro_aree, outcome,   indicator, stakeholder)
+```
+
+### Aumento delle opportunità lavorative  
+2 indicatori 
+```{r}
+if_welconn_2024 |> 
+  filter(outcome == "Aumento delle opportunità lavorative")  |> 
+  select(macro_aree, outcome,   indicator, stakeholder)
+```
+
+
+### Incrementata cultura dell’apprendimento continuo e riconoscimento competenze 
+
+```{r}
+if_welconn_2024 |> 
+  filter(outcome == "Incrementata cultura dell’apprendimento continuo e riconoscimento competenze") |> 
+  select(macro_aree, outcome,   indicator, stakeholder)
+ 
+```
+
+### [Report?] Incremento dell'attrattività 
+
+23 indicatori
+
+```{r}
+if_welconn_2024 |> 
+  filter(outcome == "Incremento dell'attrattività") |> 
+  select(macro_aree, outcome,   indicator, stakeholder)
+```
+
+### Incremento della collaborazione tra attori del territorio 
+
+13 indicatori
+```{r}
+if_welconn_2024 |>
+  filter(outcome == "Incremento della collaborazione tra attori del territorio") |> 
+  select(macro_aree, outcome,   indicator, stakeholder)
+```
+
+
+### Incremento e miglioramento dell'offerta culturale 
+30 indicatori 
+```{r}
+if_welconn_2024 |> 
+  filter(outcome == "Incremento e miglioramento dell'offerta culturale") |> 
+  select(macro_aree, outcome,   indicator, stakeholder)
+```
+
+### Maggiore accessibilità dell'offerta culturale 
+13 indicatori
+```{r}
+if_welconn_2024 |> 
+  filter(outcome == "Maggiore accessibilità dell'offerta culturale") |> 
+  select(macro_aree, outcome,   indicator, stakeholder)
+```
+
+### Valorizzazione del patrimonio culturale e territoriale 
+29 indicatori
+```{r}
+if_welconn_2024 |> 
+  filter(outcome == "Valorizzazione del patrimonio culturale e territoriale") |> 
+  select(macro_aree, outcome,   indicator, stakeholder)
+```
+
+## Check se capisco come hanno tirato fuori risultati in Report Dic 2025
+
+Cfr [@ReportDiMonitoraggio_11dic2025]
+
+## Q&A confronto Report dic 205 v. Impact Insight
+
+1. Nel IF in excel per i progetti propri posso associare queste categorie, ma non sempre si apre la tendina corrispondente in Impact Insight: 
+    + Progetto - OK 
+    + `Prime outcome tag name` (macro aree) 4 - NON si APRE
+    + `Prime indicator tag name` (indicator tag) 5 - NON si APRE
+    + `Outcome name value` (outcome) 8 - OK
+    + `Indicator name value` (indicator) 121 - OK
+    + `Stakeholder name value` (stakeholder)  - OK
+  
+2. (non potremmo chiamare "macro aree" invece che "tag outcome" per coerenza col nostro sistema?)
+
+3. La tabella riportata a p 38/39 del report di dicembre non corrisponde a quello che si vede in IM (Outcome specifico e indicatori associati), che invece corrisponddono tra IF e IM
+
+4. In Impact insight, cosa rappresentano la tabella **KPI** e la tabella **Indicatore | Frequenza** (forse non hanno molto senso se si stnno guardano i progetti propri?)  
+

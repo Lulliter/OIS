@@ -36,17 +36,9 @@ bibliography: assets/OIS.bib
 suppress-bibliography: false
 ---
 
-## Welcome to OIS
 
-This is the home page of the OIS project.
+# About
 
-### About
+Strumento interno per esplorare query di dati sui progetti di Fondazione Cariparma. Il progetto è in fase di sviluppo e non è ancora disponibile al pubblico.
 
-Add your project description here.
-
-### Data Structure
-
-This project uses data from:
-
-- `data_in/` - Input data directory
-- `data_out/` - Output data directory
+ 
