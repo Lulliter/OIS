@@ -59,6 +59,7 @@ library(skimr)
 library(glue)
 
 library(dplyr)
+library(lubridate)
 library(tidyr)
 library(forcats)
 library(stringr)
@@ -128,65 +129,75 @@ cp "$SRC/all_2025.xls" './data_in/'
 ```
 
 ```{r}
-#| label: import_data
+#| label: from_WIN_SIME
 
-all_2024 <- read_xls(here("SIME", "data_in", "all_2024.xls")) |>
-  relocate('Descrizione Aggettivo', .after = 'Aggettivo')
-all_2025 <- read_xls(here("SIME", "data_in", "all_2025.xls")) |>
-  relocate('Descrizione Aggettivo', .after = 'Aggettivo')
+# /Users/luisamimmi/Documents/2025_Cariparma/query_FROM_SIME
+dir_path <- fs::path_expand("~/Documents/2025_Cariparma/query_FROM_SIME")
 
-# putting them together but make sure have the same columns with the same types (if not, can cause problems for the next steps)
+# --- 1) COPY content in path TO current project FOLDER SIME/data_in/*  
+fs::dir_copy(dir_path, here("SIME", "data_in"), overwrite = TRUE)
 
-# Check which columns differ
-only_in_2024 <- setdiff(names(all_2024), names(all_2025))
-only_in_2025 <- setdiff(names(all_2025), names(all_2024))
+# --- 2) Ingest xls file sheet 1 (read all as text first)
+all_2024_2026_raw <- read_xls(here("SIME", "data_in", "mimmi_bnxlstot.xls"),
+                              sheet = 1,
+                              col_types = "text")
 
-type_comparison <- tibble(
-  col = names(all_2024),
-  type_2024 = map_chr(all_2024, ~ class(.x)[1]),
-  type_2025 = map_chr(all_2025, ~ class(.x)[1])
-) |>
-  filter(type_2024 != type_2025)
+# Check: which Data values can't be parsed as numeric OR as dmy?
+data_issues <- all_2024_2026_raw |>
+  select(starts_with("Data")) |>
+  pivot_longer(everything(), names_to = "col", values_to = "val") |>
+  filter(!is.na(val), val != "") |>
+  mutate(
+    is_numeric = !is.na(suppressWarnings(as.numeric(val))),
+    is_dmy = !is.na(dmy(val, quiet = TRUE))
+  ) |>
+  filter(!is_numeric, !is_dmy) |>
+  count(col, val)
 
-cols_to_fix <- c(
-  "Codice Fiscale",
-  "Natura Giuridica",
-  "Data Manifestaz.",
-  "Cod.Azione Mkt 1",
-  "Descrizione Azione Mkt 1",
-  "Richiesto il 6",
-  "Richiesto il 9",
-  "Richiesto il 10"
-)
+data_issues  # shows problematic values
 
-all_2024_2025 <- bind_rows(
-  all_2024 |> mutate(across(all_of(cols_to_fix), as.character), year = "2024"),
-  all_2025 |> mutate(across(all_of(cols_to_fix), as.character), year = "2025")
-)
+# Conversion
+all_2024_2026 <- all_2024_2026_raw |>
+  # Data Costituzione: mixed formats (Excel serial numbers + text "dd/mm/yyyy" for pre-1900)
+  # Try numeric first, fallback to text parsing, coalesce picks whichever worked
+  mutate(`Data Costituzione` = {
+    num <- suppressWarnings(as.numeric(`Data Costituzione`))
+    date_from_num <- as.Date(num, origin = "1899-12-30")
+    date_from_text <- dmy(`Data Costituzione`, quiet = TRUE)
+    coalesce(date_from_num, date_from_text)
+  }) |>
+  # Other Data columns: Excel serial numbers (days since 1899-12-30)
+  mutate(across(starts_with("Data") & !matches("Costituzione"),
+                \(x) as.Date(suppressWarnings(as.numeric(x)), origin = "1899-12-30"))) |>
+  # Importo/Totale columns: numeric (euro amounts)
+  mutate(across(matches("Totale|Importo"), as.numeric)) |>
+  relocate('Descrizione Aggettivo', .after = 'Aggettivo') |> 
+  relocate(c('Anno', 'Anno Pratica', 'Numero Pratica', 'Titolo progetto', 'Categoria Fondo', 'Fondo', 'Descrizione Fondo'), 
+           .before= everything())
 
-richieste <- all_2024_2025 |>
-  clean_names()
+names(all_2024_2026)
+# Check data types for all cols
+types_all_2024_2026 <- all_2024_2026 %>%
+  map_chr(~ class(.x)[1]) %>%
+  set_names(names(all_2024_2026))
 
 ```
 
-## Check variabili della tabella `all_2024`
-```{r}
-# do they have the same variables as all_2025 ? YES
-check_var <- all_2024 %>%
-  names() %>%
-  sort() ==
-  all_2025 %>%
-    names() %>%
-    sort() |>
-    tibble()
 
+## Check variabili della tabella `all_2024_2026`
+```{r}
 # check variables completely empty in BOTH datasets
 check_empty <- tibble(
-  var_name = names(all_2024),
-  is_empty_2024 = map_lgl(all_2024, ~ all(is.na(.x))),
-  is_empty_2025 = map_lgl(all_2025, ~ all(is.na(.x))),
-  empty_both = is_empty_2024 & is_empty_2025
-)
+  var_name = names(all_2024_2026),
+  is_empty = map_lgl(all_2024_2026, ~ all(is.na(.x))))  |> 
+  filter(is_empty == "TRUE") |> 
+  filter ( !str_detect (var_name,"Mkt")) # escludo xchè so già che è vuota ma potrebbe essere utile in futuro
+
+check_unique_id <- tibble(
+  var_name = names(all_2024_2026),
+  unique_id = map_lgl(all_2024_2026, ~ n_distinct(.x) == nrow(all_2024_2026))) |> 
+  filter(unique_id == TRUE)  
+
 ```
 
 ### LOOKUP TBLS
@@ -202,25 +213,43 @@ lookup_desc <- c(
 )
 
 lookup_useful <- c(
-  # PROGETTO
+  # KEY ID
   "Anno" = "yes",
   "Anno Pratica" = "yes",
   "Numero Pratica" = "yes",
-  "Titolo Progetto" = "yes",
+  "Titolo progetto" = "yes", # minus
+  "Codice Ente" = "yes",
+  "Denominazione Sociale" = "yes",
+
+
   "Cognome - Nome" = "yes",
-  "Categoria Fondo" = "yes",
-  "Fondo" = "yes",
-  "Descrizione Fondo" = "yes",
-  "Categoria Progetto" = "yes",
+  # PROGETTO
   "Stato" = "yes",
   "Descrizione Stato" = "yes",
   "Inammis" = "yes",
+  
+  "Categoria Fondo" = "yes",
+  "Fondo" = "yes",
+  "Descrizione Fondo" = "yes",
+  
+  "Tipo Progetto" = "yes",
+  "Categoria Progetto" = "yes",
+  "Codice Sottoprogetto" = "yes",
+  "Descrizione Sottoprogetto"   = "yes",
+  
+
   "Analisi del contesto" = "yes",
   "Strategia di intervento" = "yes",
 
   "Sintesi Oggetto" = "yes",
   "Descrizione Sintesi Oggetto" = "yes",
-
+  # "Data Protocollo" = "yes",      
+  "Data Documento"  = "yes",
+  "Data Delibera"   = "yes", 
+  "Data Chiusura"   = "yes",          
+  "Data Scadenza"   = "yes",
+  # "Data Manifestaz." = "yes"  ,             
+  
   "Totale Deliberato" = "yes",
   "Totale Erogato" = "yes",
   "Totale Residuo" = "yes",
@@ -235,8 +264,7 @@ lookup_useful <- c(
   "Inc.Ric Email" = "yes",
 
   # "var_name" = "yes" or "no" or "maybe"
-  "Codice Ente" = "yes",
-  "Denominazione Sociale" = "yes",
+  # "Denominazione Sociale" = "yes",
   "Sito Web richiedente" = "yes",
   "Data Creazione" = "yes",
   "Indirizzo" = "yes",
@@ -250,13 +278,13 @@ lookup_useful <- c(
   "Zona" = "yes",
   "Descrizione Zona" = "yes",
 
+  "Ambito" = "yes",
+  "Descrizione Ambito" = "yes",
   "Settore" = "yes",
   "Descrizione Settore" = "yes",
-  "Categoria Settore" = "yes",
-
+  "Categoria settore" = "yes", # minusc
   "Categoria" = "yes",
   "Descrizione Categoria" = "yes",
-  "Categoria settore" = "yes",
 
   "Natura Giuridica" = "yes",
   "Descrizione Natura Giuridica" = "yes",
@@ -289,14 +317,20 @@ lookup_domain_tbl <- c(
   "Inammis" = "needed",
 
   "Zona" = "needed",
+  "Descrizione Zona" = "needed",
   "Natura Giuridica" = "needed",
   "Descrizione Natura Giuridica" = "needed",
+  "Forma Giuridica" = "needed",
+  "Descrizione Forma Giuridica" = "needed",
 
   "Categoria Progetto" = "needed",
   "Codice Sottoprogetto" = "needed",
   "Tipo Progetto" = "needed",
   "Area" = "needed",
-  "Descrizione Area" = "needed"
+  "Descrizione Area" = "needed",
+  "Sintesi Oggetto" = "needed",
+  "Descrizione Sintesi Oggetto" = "needed"
+  
 )
 
 length(lookup_domain_tbl)
@@ -306,7 +340,7 @@ length(lookup_domain_tbl)
 ```{r}
 # ----- (prep)
 # get first non-NA value for each column
-examples <- all_2024_2025 |>
+examples <- all_2024_2026 |>
   map_chr(
     ~ {
       non_na <- na.omit(.x)
@@ -315,18 +349,18 @@ examples <- all_2024_2025 |>
   )
 
 # check if column is completely empty (all NA) in BOTH datasets
-is_empty <- names(all_2024_2025) |>
+is_empty <- names(all_2024_2026) |>
   map_chr(
     ~ if_else(
-      all(is.na(all_2024_2025[[.x]])),
+      all(is.na(all_2024_2026[[.x]])),
       "yes",
       "no"
     )
   ) |>
-  set_names(names(all_2024_2025))
+  set_names(names(all_2024_2026))
 
 # ----- make a table with the columnns 1) var name, 2) var meaning, 3) unique ID (yes no) 4) dominon available (yes no) .... to be completed later
-var_desc_tbl <- all_2024_2025 %>%
+var_desc_tbl <- all_2024_2026 %>%
   names() %>%
   tibble(var_name = .) |>
   mutate(
@@ -338,7 +372,6 @@ var_desc_tbl <- all_2024_2025 %>%
     domain_tbl = NA_character_
   )
 
-
 # ---- apply lookups + pattern matching with case_when
 var_desc_tbl <- var_desc_tbl |>
   mutate(
@@ -349,37 +382,35 @@ var_desc_tbl <- var_desc_tbl |>
     ),
     useful = coalesce(lookup_useful[var_name], useful),
     unique_id = coalesce(lookup_unique_id[var_name], unique_id),
-    domain_tbl = coalesce(lookup_domain_tbl[var_name], domain_tbl)
-  )
-
+    domain_tbl = coalesce(lookup_domain_tbl[var_name], domain_tbl))
 ```
 
 ## [Tbl] Variabili 
 
 ```{r}
 #| label: var_desc_tbl_ft
-#| output: true
+#| output: false
 
 var_desc_tbl_ft <- var_desc_tbl %>%
   flextable() %>%
   # Segnalo se utili / approfondimenti necessari
   bg(i = ~ useful == "yes", bg = grn_lg, part = "body") |>
   # Segnalo se vuote
-  bg(
-    i = ~ all_empty == "yes",
+  bg(i = ~ all_empty == "yes",
     j = c("var_name", "all_empty"),
     bg = burg_lg,
-    part = "body"
-  ) |>
+    part = "body") |>
   # Segnalo se serve tabella di dominio
-  bg(
-    i = ~ domain_tbl == "needed",
+  bg(i = ~ domain_tbl == "needed",
     j = c("var_name", "domain_tbl"),
     bg = blu_lg,
-    part = "body"
-  )
+    part = "body")
 
 var_desc_tbl_ft
+
+# Save as docx table
+save_as_docx(var_desc_tbl_ft,
+  path = here("SIME", "data_out", "var_desc_tbl.docx"))
 ```
 
 ## [Tbl] Variabili UTILI da esaminare 
@@ -398,8 +429,8 @@ var_desc_tbl2 <- var_desc_tbl %>%
 
 var_desc_tbl2_ft <- var_desc_tbl2 |>
   flextable() %>%
-  # Segnalo se utili / approfondimenti necessari
-  bg(i = ~ useful == "yes", bg = grn_lg, part = "body") |>
+  # # Segnalo se utili / approfondimenti necessari
+  # bg(i = ~ useful == "yes", bg = grn_lg, part = "body") |>
   # Segnalo se vuote
   bg(
     i = ~ all_empty == "yes",
@@ -426,52 +457,90 @@ save_as_docx(
 
 # ____ 
 
-# Var PROGETTO
+# Analisi variabili di PROGETTO
+
+```{r}
+var_utili <-  var_desc_tbl2$var_name[var_desc_tbl2$useful == "yes"]
+
+richieste_24_26 <- all_2024_2026 |> 
+  select(all_of(var_utili)) |>
+  mutate(across(where(is.character), str_squish)) |>  # remove extra spaces
+  janitor::clean_names() 
+```
 
 ## Tabelle di dominio
 
 ```{r}
-#| label: domain_tbls
+#| label: rec_domain_tbls
 
 # Get all vars that need domain table
 domain_vars_all <- names(lookup_domain_tbl)[lookup_domain_tbl == "needed"]
-domain_vars_exist <- domain_vars_all[domain_vars_all %in% names(all_2024_2025)]
+domain_vars_exist <- domain_vars_all[domain_vars_all %in% names(all_2024_2026)]
 # order them according to var_desc_tbl2 (which is ordered according to lookup_useful)
 domain_vars_ordered <- intersect(var_desc_tbl2$var_name, domain_vars_exist)
 
-domain_tbls <- f_recap_values(all_2024_2025, domain_vars_ordered) |>
+rec_domain_tbls <- f_recap_values(all_2024_2026, domain_vars_ordered) |>
   mutate(skim_variable = factor(skim_variable, levels = domain_vars_ordered)) |>
   arrange(skim_variable)
 
-domain_tbls
+rec_domain_tbls
 ```
 
  
 
-```{r}
-richieste |> tabyl(categoria_fondo)
+## Var sempre vuote o quasi vuote
 
-richieste |> tabyl(fondo)
-richieste |> tabyl(descrizione_fondo)
-fondo <- richieste |> tabyl(fondo, descrizione_fondo)
+```{r}
+#| label: rec_domain_tbls_ft
+#| output: true
+
+rec_domain_tbls_ft <- rec_domain_tbls %>%
+    flextable() %>%
+    bg(i = ~ as.numeric(gsub("%", "", missing_perc)) > 15, bg = burg_lg, part = "body") 
+
+rec_domain_tbls_ft
+
+# Save as docx table
+save_as_docx(rec_domain_tbls_ft,
+  path = here("SIME", "data_out", "rec_domain_tbls_ft.docx")
+)
 
 ```
 
+```{r}
+tabyl(richieste_24_26$categoria)
+tabyl(richieste_24_26$descrizione_categoria)
+table(richieste_24_26$categoria, richieste_24_26$descrizione_categoria, useNA = "ifany") |> 
+  as.data.frame() |>
+  filter(Freq > 0) |> 
+  arrange(desc(Freq))
+```
 
+## 🟩🟨🟧🟦 Ricostruzione codice SIME
 
+```{r}
+
+```
+
+# ____ 
 
 ## Domande per Area Erogativa
 
 1. Ho esportato da SIME facendo:
- + `Erogazioni -> Esportazioni su Excel -> Analisi Richieste ed Enti -> Esportazione Totale da Testata` 
- + unico filtro usato `2024` 
+`Erogazioni -> Esportazioni su Excel -> Analisi Richieste ed Enti -> Esportazione Totale da Testata` (tutto 2024-2026)
 
  Qui ho alcune domande:
 
-+ Variabili sempre vuote:
-  + xchè `Indirizzo fiscale`, `Aggregazione territoriale`, `Ambito` e `Descrizione Ambito`, `Codice Sottoprogetto`, `Categoria Progetto`, `Tipo Progetto` sono sempre vuote? 
++ Variabili categoriche (che sembrerebbero utili) ma sono sempre vuote:
+  + `Aggregazione territoriale`, `Ambito` e `Descrizione Ambito`, `Codice Sottoprogetto`, `Categoria Progetto`, `Tipo Progetto` sono sempre vuote? 
     + ( `Ambito` ~nel senso del PS o altro?)
-  + xchè tutte vuote?  
+  + altre tipo `Indirizzo fiscale`..., `Referee...`, `Manifestazione` 
+
++ Variabili categoriche (che sembrerebbero utili) ma sono *QUASI* sempre vuote:
+  + `Natura Giuridica` e `Descrizione Natura Giuridica` sono quasi sempre vuote (99.7%)... è un errore rispetto `Forma Giuridica`?
+  + `Sintesi Oggetto` e `Descrizione Sintesi Oggetto` sono quasi sempre vuote (99.5%)...  
+
++ Strano che `Categoria` è vuoto nel 20.7%, mentre `Descrizione Categoria` è vuoto solo nello 0.1%... ma le 2 variabili si parlano? (si, ci sono 363 sotto "Inesistente" x cui la Categoria è NA)
 
 + `Area` a cosa è riferito: ENTE; PROGETTO, BANCA? 
 + `Zona` a cosa è riferito: ENTE; PROGETTO, BANCA? 
